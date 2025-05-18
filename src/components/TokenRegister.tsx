@@ -1,64 +1,48 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 
 // axiosのインスタンスを作成
-// const api = axios.create({
-//   baseURL: "http://localhost:8080",
-//   headers: {
-//     "Content-Type": "application/json",
-//     Accept: "application/json",
-//   },
-//   //   withCredentials: true,
-// });
+const api = axios.create({
+  baseURL: "http://localhost:8080",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
 
-export default function Test() {
+export default function TokenRegister() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-
-  // コンポーネントマウント時にCSRFトークンを取得
-  //   useEffect(() => {
-  //     const fetchCsrfToken = async () => {
-  //       try {
-  //         // await api.get("/api/csrf-token");
-  //         await api.get("http://localhost:8080/sanctum/csrf-cookie");
-  //       } catch (error) {
-  //         console.log("error!");
-  //         console.error("CSRFトークンの取得に失敗しました:", error);
-  //       }
-  //     };
-  //     fetchCsrfToken();
-  //   }, []);
-
   const handleRegister = async () => {
     try {
       // 登録リクエスト
-      const response = await axios.post(
-        "http://localhost:8080/api/user/register",
-        {
-          name,
-          email,
-          password,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await api.post("/api/user/register", {
+        name,
+        email,
+        password,
+      });
+
+      // レスポンスからトークンを取得
+      const token = response.data.token;
+
+      // 以降のリクエストでトークンを使用
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       console.log("登録成功:", response.data);
     } catch (error) {
+      alert("エラーが発生しました");
       console.log("error!");
       console.error(error);
       if (error instanceof axios.AxiosError) {
+        alert("エラーが発生しました");
         const status = error.response?.status;
         const message = error.response?.data?.message || "エラーが発生しました";
         console.log(status, message);
         setErrorMessage(message);
-      } else {
-        setErrorMessage("te");
       }
     }
   };
@@ -68,7 +52,7 @@ export default function Test() {
       <input
         type="text"
         className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500 m-3 max-w-sm"
-        placeholder="ssname"
+        placeholder="name"
         onChange={(e) => {
           setName(e.target.value);
         }}
