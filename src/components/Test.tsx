@@ -3,18 +3,58 @@
 import { useState } from "react";
 import axios from "axios";
 
+// axiosのインスタンスを作成
+const api = axios.create({
+  baseURL: "http://localhost:8080",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
 export default function Test() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const postData = async () => {
-    axios.get("http://localhost:8080/sanctum/csrf-cookie").then((res: any) => {
-      console.log(res);
-    });
+  const handleRegister = async () => {
+    try {
+      // 登録リクエスト
+      const response = await api.post("/api/user/register", {
+        name,
+        email,
+        password,
+      });
+
+      // レスポンスからトークンを取得
+      const token = response.data.token;
+
+      // 以降のリクエストでトークンを使用
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      console.log("登録成功:", response.data);
+    } catch (error) {
+      console.log("error!");
+      console.error(error);
+      if (error instanceof axios.AxiosError) {
+        const status = error.response?.status;
+        const message = error.response?.data?.message || "エラーが発生しました";
+        console.log(status, message);
+      }
+    }
   };
 
   return (
     <div>
+      <input
+        type="text"
+        className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500 m-3 max-w-sm"
+        placeholder="name"
+        onChange={(e) => {
+          setName(e.target.value);
+        }}
+      />
+      <br />
       <input
         type="text"
         className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500 m-3 max-w-sm"
@@ -37,7 +77,7 @@ export default function Test() {
           className="shadow bg-purple-500 hover:bg-purple-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded m-3"
           onClick={() => {
             alert("送信してもよろしいですか？");
-            postData();
+            handleRegister();
           }}
         >
           送信
