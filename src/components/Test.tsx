@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { User } from "../types/api/user";
 
 export default function Test() {
   const [name, setName] = useState("");
@@ -9,13 +10,7 @@ export default function Test() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [profile, setProfile] = useState("");
-
-  interface User {
-    name: string;
-    email: string;
-    password: string;
-  }
+  const [user, setUser] = useState<User | null>(null);
 
   //画面ロード時にランダム名をセット
   useEffect(() => {
@@ -35,7 +30,6 @@ export default function Test() {
           password,
         }
       );
-      console.log("登録成功:", response.data);
       setSuccessMessage("登録成功" + response.data.token);
       localStorage.setItem("token", response.data.token);
 
@@ -45,13 +39,9 @@ export default function Test() {
     } catch (error) {
       setErrorMessage("エラーが発生しました");
 
-      console.log("error!");
-      console.error(error);
       if (error instanceof axios.AxiosError) {
         const status = error.response?.status;
         let message = error.response?.data?.message || "エラーが発生しました";
-        console.log(status, message);
-
         //messageがオブジェクトの場合がある
         if (typeof message === "object") {
           message = JSON.stringify(message);
@@ -81,14 +71,18 @@ export default function Test() {
           },
         }
       );
-      console.log("プロフィール取得成功:", profileResponse.data);
-      setSuccessMessage("プロフィール取得成功");
+      setSuccessMessage(
+        "プロフィール取得成功" + profileResponse.data.data.name
+      );
       //profile apiの結果をセット
-      const user = new User();
-      user.name = profileResponse.data.data.name;
-      user.email = profileResponse.data.data.email;
-      user.password = profileResponse.data.data.password;
-
+      const user: User = {
+        name: profileResponse.data.data.name,
+        email: profileResponse.data.data.email,
+        id: profileResponse.data.data.id,
+        create_at: profileResponse.data.data.create_at,
+        update_at: profileResponse.data.data.update_at,
+      };
+      setUser(user);
       console.log("user:", user);
     } catch (error) {
       setErrorMessage("プロフィール取得に失敗しました");
@@ -103,7 +97,7 @@ export default function Test() {
   };
 
   return (
-    <div>
+    <div className="p-2 text-center">
       <h1>Test(トークン)</h1>
       <input
         type="text"
@@ -157,10 +151,11 @@ export default function Test() {
             <div className="success-message-content">{successMessage}</div>
           </div>
         )}
-        {profile && (
+
+        {user && (
           <div className="profile">
             <p>プロフィール</p>
-            <div className="profile-content">{profile}</div>
+            <div className="profile-content p-2 border">{user.email}</div>
           </div>
         )}
       </div>
