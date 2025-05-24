@@ -1,10 +1,14 @@
-import Image from "next/image";
-import Test from "@/components/Test";
+import LoginCheck from "../components/LoginCheck";
+import HeaderTemplate from "../components/HeaderTemplate";
+import TopPageTemplate from "../components/TopPageTemplate";
 
 export default function Home() {
   return (
     <div>
-      <Test></Test>
+      <LoginCheck>
+        <HeaderTemplate></HeaderTemplate>
+        <TopPageTemplate></TopPageTemplate>
+      </LoginCheck>
     </div>
   );
 }

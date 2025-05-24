@@ -3,39 +3,36 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { User } from "../types/api/user";
+import { useRouter } from "next/navigation";
 
-export default function Test() {
-  const [name, setName] = useState("");
+export default function UserLoginTemplate() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  //画面ロード時にランダム名をセット
-  useEffect(() => {
-    setName(Math.random().toString(36).substring(2, 15));
-    setEmail(Math.random().toString(36).substring(2, 15) + "@example.com");
-    setPassword(Math.random().toString(36).substring(2, 15));
-  }, []);
-
-  const handleRegister = async () => {
+  const handleLogin = async () => {
     try {
       // 登録リクエスト
       const response = await axios.post(
-        "http://localhost:8080/api/user/register",
+        "http://localhost:8080/api/user/login",
         {
-          name,
           email,
           password,
         }
       );
-      setSuccessMessage("登録成功" + response.data.token);
-      localStorage.setItem("token", response.data.token);
+      setSuccessMessage("ログイン成功" + response.data.token);
+      localStorage.setItem("token", response.data.access_token);
 
       //ローカルストレージからtokenを取得
       const tokenFromLocalStorage = localStorage.getItem("token");
+
       handleProfile();
+
+      router.push("/");
     } catch (error) {
       setErrorMessage("エラーが発生しました");
 
@@ -52,10 +49,6 @@ export default function Test() {
         );
       }
     }
-
-    //新しいメールにセット
-    setEmail(Math.random().toString(36).substring(2, 15) + "@example.com");
-    setPassword(Math.random().toString(36).substring(2, 15));
   };
 
   const handleProfile = async () => {
@@ -99,22 +92,7 @@ export default function Test() {
   return (
     <div className="p-2 text-center w-1/2 mx-auto">
       <div className="m-3">
-        <h1 className="text-1xl font-bold">ユーザー登録(トークン)</h1>
-      </div>
-
-      <div className="m-3 flex flex-col">
-        <label htmlFor="name" className="text-left">
-          name
-        </label>
-        <input
-          type="text"
-          className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500 m-3 max-w-sm"
-          placeholder="name"
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-          }}
-        />
+        <h1 className="text-1xl font-bold">ユーザー認証(トークン)</h1>
       </div>
 
       <div className="m-3 flex flex-col">
@@ -151,7 +129,7 @@ export default function Test() {
         <button
           className="shadow bg-purple-500 hover:bg-purple-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded m-3"
           onClick={() => {
-            handleRegister();
+            handleLogin();
           }}
         >
           送信
@@ -174,7 +152,9 @@ export default function Test() {
         {user && (
           <div className="profile m-10">
             <p>プロフィール</p>
-            <div className="profile-content p-2 border">{user.email}</div>
+            <div className="profile-content p-2 border">
+              <pre>{JSON.stringify(user, null, 2)}</pre>
+            </div>
           </div>
         )}
       </div>

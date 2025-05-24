@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { User } from "../types/api/user";
 
-export default function Test() {
+export default function UserRegisterTemplate() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [user, setUser] = useState<User | null>(null);
@@ -32,9 +33,10 @@ export default function Test() {
       );
       setSuccessMessage("登録成功" + response.data.token);
       localStorage.setItem("token", response.data.token);
-
+      setOldPassword(password);
       //ローカルストレージからtokenを取得
       const tokenFromLocalStorage = localStorage.getItem("token");
+
       handleProfile();
     } catch (error) {
       setErrorMessage("エラーが発生しました");
@@ -174,7 +176,11 @@ export default function Test() {
         {user && (
           <div className="profile m-10">
             <p>プロフィール</p>
-            <div className="profile-content p-2 border">{user.email}</div>
+            <div className="profile-content p-2 border">
+              {user.email}
+              <br />
+              password: {oldPassword}
+            </div>
           </div>
         )}
       </div>
