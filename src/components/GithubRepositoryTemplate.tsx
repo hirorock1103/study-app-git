@@ -24,12 +24,17 @@ interface Branch {
   commits: Commit[];
 }
 
+interface FetchBranches {
+  name: string;
+  sha: string;
+}
+
 //githubからデータを取得
 const getGithubData = async (since: string) => {
   try {
     const baseUrl = "http://localhost:8080";
     const response = await axios.get(
-      `${baseUrl}/api/github/repository?owner=hirorock1103&since=${since}`,
+      `${baseUrl}/api/user/github/repository?owner=hirorock1103&since=${since}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -46,7 +51,7 @@ const getGithubData = async (since: string) => {
 const getGithubBranches = async (repo_name: string, since: string) => {
   const baseUrl = "http://localhost:8080";
   const response = await axios.get(
-    `${baseUrl}/api/github/graphql?owner=hirorock1103&repo=${repo_name}&email[0]=mdiz1103@gmail.com&email[1]=kobayashi_hiromu@moltsinc.co.jp&since=${since}`,
+    `${baseUrl}/api/user/github/graphql?owner=hirorock1103&repo=${repo_name}&email[0]=mdiz1103@gmail.com&email[1]=kobayashi_hiromu@moltsinc.co.jp&since=${since}`,
     {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -70,6 +75,7 @@ export default function GithubRepositoryTemplate() {
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [selectedCommits, setSelectedCommits] = useState<Commit[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [fetchBranches, setFetchBranches] = useState<FetchBranches[]>([]);
 
   useEffect(() => {
     handleFetchData();
@@ -87,6 +93,33 @@ export default function GithubRepositoryTemplate() {
       .catch((err) => {
         setError("エラーが発生しました: " + err.message);
       });
+  };
+
+  const handleFetchBranches = async (repo: GitHubRepo) => {
+    const baseUrl = "http://localhost:8080";
+    const response = await axios.get(
+      `${baseUrl}/api/user/github/branches?owner=hirorock1103&repo=${repo.repo_name}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    setFetchBranches(response.data.data);
+
+    // 特定のボタンを更新
+    const repoElement = document.querySelector(
+      `[data-repo="${repo.repo_name}"]`
+    );
+    if (repoElement) {
+      const button = repoElement.querySelector("[data-fetch-button]");
+      if (button) {
+        button.textContent = "取得完了";
+      }
+    }
+
+    //modalで取得件数を表示
+    return response.data;
   };
 
   const handleOpenModal = (repo: GitHubRepo) => {
@@ -155,15 +188,26 @@ export default function GithubRepositoryTemplate() {
               <div
                 key={repo.repo_name}
                 className="border p-4 rounded-lg shadow"
+                data-repo={repo.repo_name}
               >
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold ">{repo.repo_name}</h2>
-                  <button
-                    className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600"
-                    onClick={() => handleOpenModal(repo)}
-                  >
-                    Open
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600"
+                      data-fetch-button
+                      onClick={() => handleFetchBranches(repo)}
+                    >
+                      Fetch Branches
+                    </button>
+
+                    <button
+                      className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600"
+                      onClick={() => handleOpenModal(repo)}
+                    >
+                      Open
+                    </button>
+                  </div>
                 </div>
                 <div className="text-gray-600 mb-2">{repo.repo_full_name}</div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
