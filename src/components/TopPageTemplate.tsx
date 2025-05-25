@@ -43,10 +43,10 @@ const getGithubData = async (since: string) => {
   }
 };
 
-const getGithubBranches = async (repo_name: string) => {
+const getGithubBranches = async (repo_name: string, since: string) => {
   const baseUrl = "http://localhost:8080";
   const response = await axios.get(
-    `${baseUrl}/api/github/graphql?owner=hirorock1103&repo=${repo_name}&email[0]=mdiz1103@gmail.com&email[1]=kobayashi_hiromu@moltsinc.co.jp&since=2025-05-14`,
+    `${baseUrl}/api/github/graphql?owner=hirorock1103&repo=${repo_name}&email[0]=mdiz1103@gmail.com&email[1]=kobayashi_hiromu@moltsinc.co.jp&since=${since}`,
     {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -93,7 +93,7 @@ export default function TopPageTemplate() {
     setSelectedRepo(repo);
     setIsModalOpen(true);
 
-    getGithubBranches(repo.repo_name)
+    getGithubBranches(repo.repo_name, since)
       .then((data) => {
         setBranches(data);
         if (data.length > 0) {
@@ -131,8 +131,18 @@ export default function TopPageTemplate() {
     <div className="p-4">
       <div>
         <h1 className="text-2xl font-bold mb-4">GitHub Repository</h1>
-        <div className="text-sm text-gray-500 mb-4">
-          baseUrl: {process.env.NEXT_PUBLIC_APP_URL}
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">
+              日付を選択:
+            </label>
+            <input
+              type="date"
+              value={since}
+              onChange={(e) => setSince(e.target.value)}
+              className="border rounded-md p-1"
+            />
+          </div>
         </div>
 
         <div className="text-sm text-gray-500 mb-4">datepicker: {since}</div>
