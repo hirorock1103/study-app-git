@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { User } from "../types/api/user";
 import { useRouter } from "next/navigation";
+import { useAtom } from "jotai";
+import { userAtom } from "@/store/userAtom";
 
 export default function UserLoginTemplate() {
   const router = useRouter();
@@ -11,7 +13,7 @@ export default function UserLoginTemplate() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useAtom(userAtom);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -68,15 +70,15 @@ export default function UserLoginTemplate() {
         "プロフィール取得成功" + profileResponse.data.data.name
       );
       //profile apiの結果をセット
-      const user: User = {
+      const userData: User = {
         name: profileResponse.data.data.name,
         email: profileResponse.data.data.email,
         id: profileResponse.data.data.id,
         create_at: profileResponse.data.data.create_at,
         update_at: profileResponse.data.data.update_at,
       };
-      setUser(user);
-      console.log("user:", user);
+      setUser(userData);
+      console.log("user:", userData);
     } catch (error) {
       setErrorMessage("プロフィール取得に失敗しました");
       console.log("error!");
