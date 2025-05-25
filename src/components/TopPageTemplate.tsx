@@ -25,17 +25,11 @@ interface Branch {
 }
 
 //githubからデータを取得
-const getGithubData = async () => {
+const getGithubData = async (since: string) => {
   try {
-    // const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
     const baseUrl = "http://localhost:8080";
-    // if (!baseUrl) {
-    //   throw new Error("NEXT_PUBLIC_APP_URL is not defined");
-    // }
-
     const response = await axios.get(
-      // `${baseUrl}/api/github/repository?owner=hirorock1103&since=2025-05-10`,
-      `${baseUrl}/api/github/repository?owner=hirorock1103&since=2025-05-14`,
+      `${baseUrl}/api/github/repository?owner=hirorock1103&since=${since}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -66,6 +60,10 @@ export default function TopPageTemplate() {
   const [githubData, setGithubData] = useState<{ data: GitHubRepo[] } | null>(
     null
   );
+  //デフォルトは1週間前
+  const [since, setSince] = useState<string>(
+    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] // YYYY-MM-DD形式に変換
+  );
   const [error, setError] = useState<string | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -74,7 +72,11 @@ export default function TopPageTemplate() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    getGithubData()
+    handleFetchData();
+  }, [since]);
+
+  const handleFetchData = () => {
+    getGithubData(since)
       .then((data) => {
         if (data) {
           setGithubData(data);
@@ -85,7 +87,7 @@ export default function TopPageTemplate() {
       .catch((err) => {
         setError("エラーが発生しました: " + err.message);
       });
-  }, []);
+  };
 
   const handleOpenModal = (repo: GitHubRepo) => {
     setSelectedRepo(repo);
@@ -132,6 +134,9 @@ export default function TopPageTemplate() {
         <div className="text-sm text-gray-500 mb-4">
           baseUrl: {process.env.NEXT_PUBLIC_APP_URL}
         </div>
+
+        <div className="text-sm text-gray-500 mb-4">datepicker: {since}</div>
+
         {error ? (
           <div className="text-red-500">{error}</div>
         ) : (
