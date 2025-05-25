@@ -1,13 +1,13 @@
 import LoginCheck from "../components/LoginCheck";
 import HeaderTemplate from "../components/HeaderTemplate";
-import TopPageTemplate from "../components/TopPageTemplate";
+import GithubRepositoryTemplate from "../components/GithubRepositoryTemplate";
 
 export default function Home() {
   return (
     <div>
       <LoginCheck>
         <HeaderTemplate></HeaderTemplate>
-        <TopPageTemplate></TopPageTemplate>
+        <GithubRepositoryTemplate></GithubRepositoryTemplate>
       </LoginCheck>
     </div>
   );

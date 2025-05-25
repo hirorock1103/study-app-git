@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAtom } from "jotai";
+import { userAtom } from "@/store/userAtom";
 
 export default function LoginCheck({
   children,
@@ -10,15 +12,24 @@ export default function LoginCheck({
 }) {
   const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
+  const [user] = useAtom(userAtom);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
+    if (token && user) {
       setToken(token);
+    } else {
+      setToken(null);
     }
-  }, []);
+  }, [user]);
 
-  if (!token) {
-    return <div>ログインしてください</div>;
+  if (!token || !user) {
+    return (
+      <div>
+        <div>ログインしてください</div>
+        <button onClick={() => router.push("/login")}>ログイン画面へ</button>
+      </div>
+    );
   }
   return <div>{children}</div>;
 }
