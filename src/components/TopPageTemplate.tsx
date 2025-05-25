@@ -10,17 +10,32 @@ interface GitHubRepo {
   pushed_at: string;
 }
 
+interface Commit {
+  message: string;
+  date: string;
+  url: string;
+  sha: string;
+  branch: string;
+}
+
+interface Branch {
+  name: string;
+  commit_count: number;
+  commits: Commit[];
+}
+
 //githubからデータを取得
 const getGithubData = async () => {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    // const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const baseUrl = "http://localhost:8080";
     // if (!baseUrl) {
     //   throw new Error("NEXT_PUBLIC_APP_URL is not defined");
     // }
 
     const response = await axios.get(
       // `${baseUrl}/api/github/repository?owner=hirorock1103&since=2025-05-10`,
-      `http://localhost:8080/api/github/repository?owner=hirorock1103&since=2025-05-10`,
+      `${baseUrl}/api/github/repository?owner=hirorock1103&since=2025-05-14`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -34,11 +49,29 @@ const getGithubData = async () => {
   }
 };
 
+const getGithubBranches = async (repo_name: string) => {
+  const baseUrl = "http://localhost:8080";
+  const response = await axios.get(
+    `${baseUrl}/api/github/graphql?owner=hirorock1103&repo=${repo_name}&email[0]=mdiz1103@gmail.com&email[1]=kobayashi_hiromu@moltsinc.co.jp&since=2025-05-14`,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
+  );
+  return response.data.branches as Branch[];
+};
+
 export default function TopPageTemplate() {
   const [githubData, setGithubData] = useState<{ data: GitHubRepo[] } | null>(
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+  const [selectedCommits, setSelectedCommits] = useState<Commit[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     getGithubData()
@@ -54,10 +87,51 @@ export default function TopPageTemplate() {
       });
   }, []);
 
+  const handleOpenModal = (repo: GitHubRepo) => {
+    setSelectedRepo(repo);
+    setIsModalOpen(true);
+
+    getGithubBranches(repo.repo_name)
+      .then((data) => {
+        setBranches(data);
+        if (data.length > 0) {
+          setSelectedBranch(data[0].name);
+          setSelectedCommits(data[0].commits);
+        }
+      })
+      .catch((err) => {
+        setError("エラーが発生しました: " + err.message);
+      });
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedRepo(null);
+    setSelectedBranch(null);
+    setSelectedCommits([]);
+  };
+
+  // ブランチ選択時のハンドラを追加
+  const handleBranchChange = (branchName: string) => {
+    setSelectedBranch(branchName);
+    const selectedBranchData = branches.find((b) => b.name === branchName);
+    if (selectedBranchData) {
+      setSelectedCommits(selectedBranchData.commits);
+    }
+  };
+
+  // 選択されたブランチのコミットのみをフィルタリング
+  const filteredCommits = selectedCommits.filter(
+    (commit) => commit.branch === selectedBranch
+  );
+
   return (
     <div className="p-4">
       <div>
         <h1 className="text-2xl font-bold mb-4">GitHub Repository</h1>
+        <div className="text-sm text-gray-500 mb-4">
+          baseUrl: {process.env.NEXT_PUBLIC_APP_URL}
+        </div>
         {error ? (
           <div className="text-red-500">{error}</div>
         ) : (
@@ -67,7 +141,15 @@ export default function TopPageTemplate() {
                 key={repo.repo_name}
                 className="border p-4 rounded-lg shadow"
               >
-                <h2 className="text-xl font-semibold mb-2">{repo.repo_name}</h2>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-semibold ">{repo.repo_name}</h2>
+                  <button
+                    className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600"
+                    onClick={() => handleOpenModal(repo)}
+                  >
+                    Open
+                  </button>
+                </div>
                 <div className="text-gray-600 mb-2">{repo.repo_full_name}</div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
@@ -84,6 +166,74 @@ export default function TopPageTemplate() {
           </div>
         )}
       </div>
+
+      {/* モーダル */}
+      {isModalOpen && selectedRepo && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-[600px] max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">{selectedRepo.repo_name}</h2>
+              <button
+                onClick={handleCloseModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* ブランチ選択ドロップダウン */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                ブランチを選択
+              </label>
+              <select
+                value={selectedBranch || ""}
+                onChange={(e) => handleBranchChange(e.target.value)}
+                className="w-full p-2 border rounded-md"
+              >
+                {branches.map((branch: Branch) => (
+                  <option key={branch.name} value={branch.name}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* コミット情報 */}
+            <div className="space-y-4">
+              <h3 className="font-semibold">コミット履歴</h3>
+              {filteredCommits.map((commit) => (
+                <div key={commit.sha} className="border p-3 rounded-md">
+                  <p className="font-medium">{commit.message}</p>
+                  <p className="text-sm text-gray-600">
+                    日時: {new Date(commit.date).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    SHA: {commit.sha.substring(0, 7)}
+                  </p>
+                  <a
+                    href={commit.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline text-sm"
+                  >
+                    コミットを確認
+                  </a>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={handleCloseModal}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
