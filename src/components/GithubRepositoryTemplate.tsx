@@ -2,13 +2,9 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-
-interface GitHubRepo {
-  repo_name: string;
-  repo_full_name: string;
-  updated_at: string;
-  pushed_at: string;
-}
+import { GitHubRepo } from "@/types/api/github_repo";
+import { useGithubRepo, useGithubRepoDispatch } from "@/store/githubRepoAtom";
+import { useRouter } from "next/navigation";
 
 interface Commit {
   message: string;
@@ -62,6 +58,9 @@ const getGithubBranches = async (repo_name: string, since: string) => {
 };
 
 export default function GithubRepositoryTemplate() {
+  const router = useRouter();
+  const setGithubRepo = useGithubRepoDispatch();
+  const githubRepo = useGithubRepo();
   const [githubData, setGithubData] = useState<{ data: GitHubRepo[] } | null>(
     null
   );
@@ -155,6 +154,11 @@ export default function GithubRepositoryTemplate() {
     }
   };
 
+  const handleAtomValueCheck = () => {
+    console.log("atomから値を取得");
+    console.log(githubRepo);
+  };
+
   // 選択されたブランチのコミットのみをフィルタリング
   const filteredCommits = selectedCommits.filter(
     (commit) => commit.branch === selectedBranch
@@ -180,6 +184,10 @@ export default function GithubRepositoryTemplate() {
 
         <div className="text-sm text-gray-500 mb-4">datepicker: {since}</div>
 
+        <div className="text-sm text-gray-500 mb-4">
+          atomから値を取得: {githubRepo?.repo_name}
+        </div>
+
         {error ? (
           <div className="text-red-500">{error}</div>
         ) : (
@@ -200,7 +208,17 @@ export default function GithubRepositoryTemplate() {
                     >
                       Fetch Branches
                     </button>
-
+                    <button
+                      className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600"
+                      onClick={() => {
+                        setGithubRepo(repo);
+                        router.push(
+                          `/github?repository_name=${repo.repo_name}`
+                        );
+                      }}
+                    >
+                      {repo.repo_name} ブランチ詳細
+                    </button>
                     <button
                       className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600"
                       onClick={() => handleOpenModal(repo)}

@@ -16,14 +16,16 @@ export default function LoginCheck({
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token && user) {
+    // if (token && user) {
+    if (token) {
       setToken(token);
     } else {
       setToken(null);
     }
   }, [user]);
 
-  if (!token || !user) {
+  //if (!token || !user) {
+  if (!token) {
     return (
       <div>
         <div>ログインしてください</div>
