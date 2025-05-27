@@ -25,11 +25,11 @@ interface Branch {
 }
 
 //githubからデータを取得
-const getGithubData = async (since: string) => {
+const getGithubData = async (since: string, until: string) => {
   try {
     const baseUrl = "http://localhost:8080";
     const response = await axios.get(
-      `${baseUrl}/api/github/repository?owner=hirorock1103&since=${since}`,
+      `${baseUrl}/api/github/repository?owner=hirorock1103&since=${since}&until=${until}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -64,6 +64,9 @@ export default function TopPageTemplate() {
   const [since, setSince] = useState<string>(
     new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] // YYYY-MM-DD形式に変換
   );
+  const [until, setUntil] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
   const [error, setError] = useState<string | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -73,10 +76,10 @@ export default function TopPageTemplate() {
 
   useEffect(() => {
     handleFetchData();
-  }, [since]);
+  }, [since, until]);
 
   const handleFetchData = () => {
-    getGithubData(since)
+    getGithubData(since, until)
       .then((data) => {
         if (data) {
           setGithubData(data);
@@ -133,9 +136,7 @@ export default function TopPageTemplate() {
         <h1 className="text-2xl font-bold mb-4">GitHub Repository</h1>
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">
-              日付を選択:
-            </label>
+            <label className="text-sm font-medium text-gray-700">開始日:</label>
             <input
               type="date"
               value={since}
@@ -143,9 +144,20 @@ export default function TopPageTemplate() {
               className="border rounded-md p-1"
             />
           </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">終了日:</label>
+            <input
+              type="date"
+              value={until}
+              onChange={(e) => setUntil(e.target.value)}
+              className="border rounded-md p-1"
+            />
+          </div>
         </div>
 
-        <div className="text-sm text-gray-500 mb-4">datepicker: {since}</div>
+        <div className="text-sm text-gray-500 mb-4">
+          datepicker: {since} - {until}
+        </div>
 
         {error ? (
           <div className="text-red-500">{error}</div>

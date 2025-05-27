@@ -16,7 +16,10 @@ interface Branch {
 
 export default function GithubBranchTemplate() {
   const [since, setSince] = useState<string>(
-    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] // YYYY-MM-DD形式に変換
+    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+  );
+  const [until, setUntil] = useState<string>(
+    new Date().toISOString().split("T")[0]
   );
   //useSearchParams
   const searchParams = useSearchParams();
@@ -38,11 +41,11 @@ export default function GithubBranchTemplate() {
 
   useEffect(() => {
     handleFetchData();
-  }, [repository_name, since]);
+  }, [repository_name, since, until]);
 
   const handleFetchData = () => {
     startLoading();
-    getGithubBranches(repository_name || "")
+    getGithubBranches(repository_name || "", since, until)
       .then((data) => {
         setGithubBranches({ data: data });
         stopLoading();
@@ -91,9 +94,7 @@ export default function GithubBranchTemplate() {
         </h1>
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">
-              日付を選択:
-            </label>
+            <label className="text-sm font-medium text-gray-700">開始日:</label>
             <input
               type="date"
               value={since}
@@ -101,9 +102,20 @@ export default function GithubBranchTemplate() {
               className="border rounded-md p-1"
             />
           </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">終了日:</label>
+            <input
+              type="date"
+              value={until}
+              onChange={(e) => setUntil(e.target.value)}
+              className="border rounded-md p-1"
+            />
+          </div>
         </div>
 
-        <div className="text-sm text-gray-500 mb-4">datepicker: {since}</div>
+        <div className="text-sm text-gray-500 mb-4">
+          datepicker: {since} - {until}
+        </div>
 
         {error ? (
           <div className="text-red-500">{error}</div>

@@ -124,11 +124,14 @@ export default function GithubBranchDetail({
   const [since, setSince] = useState<string>(
     new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
+  const [until, setUntil] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
 
   const handleFetchCommits = async () => {
     const baseUrl = "http://localhost:8080";
     const response = await axios.get(
-      `${baseUrl}/api/user/github/db/commits?repository_name=${repositoryName}&branch_name=${branchName}&since=${since}`,
+      `${baseUrl}/api/user/github/db/commits?repository_name=${repositoryName}&branch_name=${branchName}&since=${since}&until=${until}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -141,7 +144,7 @@ export default function GithubBranchDetail({
 
   useEffect(() => {
     handleFetchCommits();
-  }, [branchName, repositoryName, since]);
+  }, [branchName, repositoryName, since, until]);
 
   const openModal = (commit: Commit) => {
     setSelectedCommit(commit);
@@ -198,13 +201,20 @@ ${JSON.stringify(JSON.parse(commit.files), null, 2)}
         </div>
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">
-              日付を選択:
-            </label>
+            <label className="text-sm font-medium text-gray-700">開始日:</label>
             <input
               type="date"
               value={since}
               onChange={(e) => setSince(e.target.value)}
+              className="border rounded-md p-1"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">終了日:</label>
+            <input
+              type="date"
+              value={until}
+              onChange={(e) => setUntil(e.target.value)}
               className="border rounded-md p-1"
             />
           </div>
