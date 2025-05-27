@@ -119,11 +119,15 @@ export default function GithubBranchDetail({
   const [commitHistory, setCommitHistory] = useState<Commit[]>([]);
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // デフォルトは1週間前
+  const [since, setSince] = useState<string>(
+    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+  );
 
   const handleFetchCommits = async () => {
     const baseUrl = "http://localhost:8080";
     const response = await axios.get(
-      `${baseUrl}/api/user/github/db/commits?repository_name=${repositoryName}&branch_name=${branchName}`,
+      `${baseUrl}/api/user/github/db/commits?repository_name=${repositoryName}&branch_name=${branchName}&since=${since}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -136,7 +140,7 @@ export default function GithubBranchDetail({
 
   useEffect(() => {
     handleFetchCommits();
-  }, [branchName, repositoryName]);
+  }, [branchName, repositoryName, since]);
 
   const openModal = (commit: Commit) => {
     setSelectedCommit(commit);
@@ -148,32 +152,48 @@ export default function GithubBranchDetail({
     setSelectedCommit(null);
   };
 
+  // 選択した日付以降のコミットのみをフィルタリング
+  const filteredCommits = commitHistory.filter(
+    (commit) => new Date(commit.commitDate) >= new Date(since)
+  );
+
   return (
     <>
-      <div className="container mx-auto px-4 py-8">
+      <div className="p-4">
         <h1 className="text-2xl font-bold mb-6">Commits</h1>
-        <div className="max-h-[calc(100vh-12rem)] overflow-y-auto">
-          <ul className="space-y-2">
-            {commitHistory.map((commit) => (
-              <li key={commit.id} className="border-b border-gray-300 py-2">
-                <div className="flex justify-between items-start">
-                  <div className="flex flex-col">
-                    <p className="text-sm text-gray-500">
-                      {commit.commitDate.split("T")[0]}
-                    </p>
-                    <p>{commit.commitMessage}</p>
-                  </div>
-                  <button
-                    onClick={() => openModal(commit)}
-                    className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600"
-                  >
-                    詳細
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">
+              日付を選択:
+            </label>
+            <input
+              type="date"
+              value={since}
+              onChange={(e) => setSince(e.target.value)}
+              className="border rounded-md p-1"
+            />
+          </div>
         </div>
+        <ul className="space-y-2">
+          {commitHistory.map((commit) => (
+            <li key={commit.id} className="border-b border-gray-300 py-2">
+              <div className="flex justify-between items-start">
+                <div className="flex flex-col">
+                  <p className="text-sm text-gray-500">
+                    {commit.commitDate.split("T")[0]}
+                  </p>
+                  <p>{commit.commitMessage}</p>
+                </div>
+                <button
+                  onClick={() => openModal(commit)}
+                  className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600"
+                >
+                  詳細
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
       <CommitDetailModal
         isOpen={isModalOpen}
