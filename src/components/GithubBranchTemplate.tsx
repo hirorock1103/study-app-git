@@ -31,7 +31,9 @@ export default function GithubBranchTemplate() {
   const [loadingBranches, setLoadingBranches] = useState<{
     [key: string]: boolean;
   }>({});
-  const [responseMessage, setResponseMessage] = useState<string | null>(null);
+  const [responseMessages, setResponseMessages] = useState<{
+    [key: string]: string | null;
+  }>({});
 
   useEffect(() => {
     handleFetchData();
@@ -52,7 +54,7 @@ export default function GithubBranchTemplate() {
 
   const handleGetLatestCommit = async (branchName: string) => {
     setLoadingBranches((prev) => ({ ...prev, [branchName]: true }));
-    setResponseMessage(null);
+    setResponseMessages((prev) => ({ ...prev, [branchName]: null }));
     try {
       const response = await getGithubBranchesLatestCommit(
         repository_name || "",
@@ -60,10 +62,16 @@ export default function GithubBranchTemplate() {
         since
       );
       console.log("response", response);
-      setResponseMessage(response.message);
+      setResponseMessages((prev) => ({
+        ...prev,
+        [branchName]: response.message,
+      }));
     } catch (err) {
-      setError("コミットの取得に失敗しました: " + err.message);
-      setResponseMessage(err.message);
+      setError("コミットの取得に失敗しました: " + (err as Error).message);
+      setResponseMessages((prev) => ({
+        ...prev,
+        [branchName]: (err as Error).message,
+      }));
     } finally {
       setLoadingBranches((prev) => ({ ...prev, [branchName]: false }));
     }
@@ -76,7 +84,6 @@ export default function GithubBranchTemplate() {
           データ取得中...
         </div>
       )}
-      responseMessage: {responseMessage}
       <div>
         <h1 className="text-2xl font-bold mb-4">
           GitHub Repository: {githubRepo?.repo_name}
@@ -131,6 +138,11 @@ export default function GithubBranchTemplate() {
                   </button>
                 </div>
                 <div className="text-gray-600 mb-2">{branch.sha}</div>
+                {responseMessages[branch.branchName] && (
+                  <span className="mt-2 text-sm text-green-700">
+                    {responseMessages[branch.branchName]}
+                  </span>
+                )}
               </div>
             ))}
           </div>
