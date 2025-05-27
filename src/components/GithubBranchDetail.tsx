@@ -119,6 +119,7 @@ export default function GithubBranchDetail({
   const [commitHistory, setCommitHistory] = useState<Commit[]>([]);
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   // デフォルトは1週間前
   const [since, setSince] = useState<string>(
     new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
@@ -152,6 +153,31 @@ export default function GithubBranchDetail({
     setSelectedCommit(null);
   };
 
+  const handleCopyAll = async () => {
+    const allCommitsInfo = commitHistory
+      .map(
+        (commit) => `
+コミッター名: ${commit.commitName}
+メッセージ: ${commit.commitMessage}
+メール: ${commit.commitEmail}
+コミット日時: ${commit.commitDate}
+コミットURL: ${commit.commitUrl}
+変更ファイル:
+${JSON.stringify(JSON.parse(commit.files), null, 2)}
+-------------------
+    `
+      )
+      .join("\n");
+
+    try {
+      await navigator.clipboard.writeText(allCommitsInfo);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("コピーに失敗しました:", err);
+    }
+  };
+
   // 選択した日付以降のコミットのみをフィルタリング
   const filteredCommits = commitHistory.filter(
     (commit) => new Date(commit.commitDate) >= new Date(since)
@@ -160,7 +186,16 @@ export default function GithubBranchDetail({
   return (
     <>
       <div className="p-4">
-        <h1 className="text-2xl font-bold mb-6">Commits</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Commits</h1>
+          <button
+            onClick={handleCopyAll}
+            className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            title="全てのコミット情報をコピー"
+          >
+            {copied ? "✓ コピー完了" : "📋 全てコピー"}
+          </button>
+        </div>
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">
