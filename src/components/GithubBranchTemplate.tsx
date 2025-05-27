@@ -28,6 +28,10 @@ export default function GithubBranchTemplate() {
   console.log("githubRepo", githubRepo);
 
   const [error, setError] = useState<string | null>(null);
+  const [loadingBranches, setLoadingBranches] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [responseMessage, setResponseMessage] = useState<string | null>(null);
 
   useEffect(() => {
     handleFetchData();
@@ -46,15 +50,23 @@ export default function GithubBranchTemplate() {
       });
   };
 
-  const handleGetLatestCommit = (branchName: string) => {
-    startLoading();
-    getGithubBranchesLatestCommit(
-      repository_name || "",
-      branchName,
-      since
-    ).then((data) => {
-      stopLoading();
-    });
+  const handleGetLatestCommit = async (branchName: string) => {
+    setLoadingBranches((prev) => ({ ...prev, [branchName]: true }));
+    setResponseMessage(null);
+    try {
+      const response = await getGithubBranchesLatestCommit(
+        repository_name || "",
+        branchName,
+        since
+      );
+      console.log("response", response);
+      setResponseMessage(response.message);
+    } catch (err) {
+      setError("コミットの取得に失敗しました: " + err.message);
+      setResponseMessage(err.message);
+    } finally {
+      setLoadingBranches((prev) => ({ ...prev, [branchName]: false }));
+    }
   };
 
   return (
@@ -64,6 +76,7 @@ export default function GithubBranchTemplate() {
           データ取得中...
         </div>
       )}
+      responseMessage: {responseMessage}
       <div>
         <h1 className="text-2xl font-bold mb-4">
           GitHub Repository: {githubRepo?.repo_name}
@@ -99,10 +112,22 @@ export default function GithubBranchTemplate() {
                     {branch.branchName}
                   </h2>
                   <button
-                    className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600"
+                    className={`bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600 flex items-center gap-2 ${
+                      loadingBranches[branch.branchName]
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
                     onClick={() => handleGetLatestCommit(branch.branchName)}
+                    disabled={loadingBranches[branch.branchName]}
                   >
-                    最新コミットを取得
+                    {loadingBranches[branch.branchName] ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        処理中...
+                      </>
+                    ) : (
+                      "最新コミットを取得"
+                    )}
                   </button>
                 </div>
                 <div className="text-gray-600 mb-2">{branch.sha}</div>
