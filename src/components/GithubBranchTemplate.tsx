@@ -5,9 +5,8 @@ import axios from "axios";
 import { useSearchParams } from "next/navigation";
 import { getGithubBranches } from "@/features/github/services/getGithubBranches";
 import { getGithubBranchesLatestCommit } from "@/features/github/services/getGithubBranchesLatestCommit";
-import { useAtomValue } from "jotai";
-import { githubRepoAtom } from "@/atoms/githubRepoAtom";
 import { useGithubRepo } from "@/store/githubRepoAtom";
+import { useLoading } from "@/features/github/hooks/useLoading";
 
 interface Branch {
   branchName: string;
@@ -25,6 +24,7 @@ export default function GithubBranchTemplate() {
     data: Branch[];
   } | null>(null);
   const githubRepo = useGithubRepo();
+  const { isLoading, startLoading, stopLoading } = useLoading();
   console.log("githubRepo", githubRepo);
 
   const [error, setError] = useState<string | null>(null);
@@ -34,17 +34,36 @@ export default function GithubBranchTemplate() {
   }, [repository_name, since]);
 
   const handleFetchData = () => {
+    startLoading();
     getGithubBranches(repository_name || "")
       .then((data) => {
         setGithubBranches({ data: data });
+        stopLoading();
       })
       .catch((err) => {
         setError("エラーが発生しました: " + err.message);
+        stopLoading();
       });
+  };
+
+  const handleGetLatestCommit = (branchName: string) => {
+    startLoading();
+    getGithubBranchesLatestCommit(
+      repository_name || "",
+      branchName,
+      since
+    ).then((data) => {
+      stopLoading();
+    });
   };
 
   return (
     <div className="p-4">
+      {isLoading && (
+        <div className="flex justify-center items-center h-screen">
+          データ取得中...
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-bold mb-4">
           GitHub Repository: {githubRepo?.repo_name}
@@ -81,13 +100,7 @@ export default function GithubBranchTemplate() {
                   </h2>
                   <button
                     className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600"
-                    onClick={() =>
-                      getGithubBranchesLatestCommit(
-                        repository_name || "",
-                        branch.branchName,
-                        since
-                      )
-                    }
+                    onClick={() => handleGetLatestCommit(branch.branchName)}
                   >
                     最新コミットを取得
                   </button>
