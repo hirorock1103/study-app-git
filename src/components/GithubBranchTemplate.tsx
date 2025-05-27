@@ -7,6 +7,7 @@ import { getGithubBranches } from "@/features/github/services/getGithubBranches"
 import { getGithubBranchesLatestCommit } from "@/features/github/services/getGithubBranchesLatestCommit";
 import { useGithubRepo } from "@/store/githubRepoAtom";
 import { useLoading } from "@/features/github/hooks/useLoading";
+import Link from "next/link";
 
 interface Branch {
   branchName: string;
@@ -118,24 +119,33 @@ export default function GithubBranchTemplate() {
                   <h2 className="text-xl font-semibold ">
                     {branch.branchName}
                   </h2>
-                  <button
-                    className={`bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600 flex items-center gap-2 ${
-                      loadingBranches[branch.branchName]
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    }`}
-                    onClick={() => handleGetLatestCommit(branch.branchName)}
-                    disabled={loadingBranches[branch.branchName]}
-                  >
-                    {loadingBranches[branch.branchName] ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        処理中...
-                      </>
-                    ) : (
-                      "最新コミットを取得"
-                    )}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className={`bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600 flex items-center gap-2 ${
+                        loadingBranches[branch.branchName]
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
+                      onClick={() => handleGetLatestCommit(branch.branchName)}
+                      disabled={loadingBranches[branch.branchName]}
+                    >
+                      {loadingBranches[branch.branchName] ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          処理中...
+                        </>
+                      ) : (
+                        "最新コミットを取得"
+                      )}
+                    </button>
+                    <Link
+                      href={`/github/branch?branch_name=${branch.branchName}&repository_name=${repository_name}`}
+                    >
+                      <button className="bg-blue-500 text-white px-4 py-1 rounded-md text-xs hover:bg-blue-600">
+                        詳細
+                      </button>
+                    </Link>
+                  </div>
                 </div>
                 <div className="text-gray-600 mb-2">{branch.sha}</div>
                 {responseMessages[branch.branchName] && (
