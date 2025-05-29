@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { authService } from "@/services/authService";
 
 interface Commit {
   id: number;
@@ -134,7 +135,7 @@ export default function GithubBranchDetail({
       `${baseUrl}/api/user/github/db/commits?repository_name=${repositoryName}&branch_name=${branchName}&since=${since}&until=${until}`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${authService.getToken()}`,
         },
       }
     );

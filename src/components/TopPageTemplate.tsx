@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { authService } from "@/services/authService";
 
 interface GitHubRepo {
   repo_name: string;
@@ -32,7 +33,7 @@ const getGithubData = async (since: string, until: string) => {
       `${baseUrl}/api/github/repository?owner=hirorock1103&since=${since}&until=${until}`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${authService.getToken()}`,
         },
       }
     );

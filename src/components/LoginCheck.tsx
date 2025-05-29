@@ -2,30 +2,26 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAtom } from "jotai";
-import { userAtom } from "@/store/userAtom";
+import { authService } from "@/services/authService";
 
 export default function LoginCheck({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const router = useRouter();
-  const [user] = useAtom(userAtom);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    // if (token && user) {
-    if (token) {
-      setToken(token);
-    } else {
-      setToken(null);
-    }
-  }, [user]);
+    const token = authService.getToken();
+    setIsAuthenticated(!!token);
+  }, []);
 
-  //if (!token || !user) {
-  if (!token) {
+  if (isAuthenticated === null) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
     return (
       <div>
         <div>ログインしてください</div>
@@ -33,5 +29,6 @@ export default function LoginCheck({
       </div>
     );
   }
+  
   return <div>{children}</div>;
 }

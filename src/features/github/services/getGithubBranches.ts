@@ -1,4 +1,5 @@
 import axios from "axios";
+import { authService } from "@/services/authService";
 
 interface Branch {
   branchName: string;
@@ -15,7 +16,7 @@ export const getGithubBranches = async (
     `${baseUrl}/api/user/github/db/branches?repository_name=${repo_name}&since=${since}&until=${until}`,
     {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${authService.getToken()}`,
       },
     }
   );

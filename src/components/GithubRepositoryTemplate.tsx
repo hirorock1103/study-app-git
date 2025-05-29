@@ -5,6 +5,7 @@ import axios from "axios";
 import { GitHubRepo } from "@/types/api/github_repo";
 import { useGithubRepo, useGithubRepoDispatch } from "@/store/githubRepoAtom";
 import { useRouter } from "next/navigation";
+import { authService } from "@/services/authService";
 
 interface Commit {
   message: string;
@@ -33,7 +34,7 @@ const getGithubData = async (since: string, until: string) => {
       `${baseUrl}/api/user/github/repository?owner=hirorock1103&since=${since}&until=${until}`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${authService.getToken()}`,
         },
       }
     );
@@ -54,7 +55,7 @@ const getGithubBranches = async (
     `${baseUrl}/api/user/github/graphql?owner=hirorock1103&repo=${repo_name}&email[0]=mdiz1103@gmail.com&email[1]=kobayashi_hiromu@moltsinc.co.jp&since=${since}&until=${until}`,
     {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${authService.getToken()}`,
       },
     }
   );
@@ -107,7 +108,7 @@ export default function GithubRepositoryTemplate() {
       `${baseUrl}/api/user/github/branches?owner=hirorock1103&repo=${repo.repo_name}`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${authService.getToken()}`,
         },
       }
     );
