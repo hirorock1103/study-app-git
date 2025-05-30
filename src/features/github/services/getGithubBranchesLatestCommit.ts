@@ -1,4 +1,5 @@
 import axios from "axios";
+import { authService } from "@/services/authService";
 
 //githubブランチの最新コミットをDBに反映
 export const getGithubBranchesLatestCommit = async (
@@ -12,7 +13,7 @@ export const getGithubBranchesLatestCommit = async (
     `${baseUrl}/api/user/github?repo=${repo_name}&owner=hirorock1103&branch=${branch_name}&since=${since}`,
     {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${authService.getToken()}`,
       },
     }
   );
